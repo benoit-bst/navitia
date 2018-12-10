@@ -70,6 +70,7 @@ namespace disruption {
 struct Impact;
 }
 
+typedef uint32_t admin_idx;
 
 std::ostream& operator<<(std::ostream& os, const Mode_e& mode);
 
@@ -155,7 +156,7 @@ struct StopPoint : public Header, Nameable, hasProperties, HasMessages {
     std::string label;
 
     StopArea* stop_area;
-    std::vector<navitia::georef::Admin*> admin_list;
+    std::vector<admin_idx> admin_list;
     Network* network;
     std::vector<StopPointConnection*> stop_point_connection_list;
     std::set<Dataset*> dataset_list;
@@ -251,7 +252,7 @@ struct StopArea : public Header, Nameable, hasProperties, HasMessages {
     const static Type_e type = Type_e::StopArea;
     GeographicalCoord coord;
     std::string additional_data;
-    std::vector<navitia::georef::Admin*> admin_list;
+    std::vector<admin_idx> admin_list;
     bool wheelchair_boarding = false;
     std::string label;
     //name of the time zone of the stop area

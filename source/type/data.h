@@ -155,6 +155,9 @@ public:
     /// Fare data
     std::unique_ptr<navitia::fare::Fare> fare;
 
+    // Admin List
+    std::unordered_map<admin_idx, navitia::georef::Admin*> admin_list;
+
     // functor to find admins
     std::function<std::vector<georef::Admin*>(const GeographicalCoord&, georef::AdminRtree&)> find_admins;
 
@@ -190,6 +193,7 @@ public:
       */
     Indexes get_target_by_one_source(Type_e source, Type_e target, idx_t source_idx) const ;
 
+void insert_admins(std::vector<navitia::georef::Admin*>& admins);
 
     bool last_load_succeeded;
     // UTC

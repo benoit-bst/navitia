@@ -58,6 +58,7 @@ www.navitia.io
 #include "kraken/fill_disruption_from_database.h"
 
 namespace pt = boost::posix_time;
+namespace nu = navitia::utils;
 
 namespace navitia { namespace type {
 
@@ -253,12 +254,32 @@ void  Data::build_administrative_regions() {
 
     // set admins to stop points
     int cpt_no_projected = 0;
+    uint32_t idx = 0
     for (type::StopPoint* stop_point : pt_data->stop_points) {
         if (!stop_point->admin_list.empty()) {
             continue;
         }
         const auto &admins = find_admins(stop_point->coord, admin_tree);
-        boost::push_back(stop_point->admin_list, admins);
+        // Better with
+        // auto result = std::find_if(
+        //  mapObject.begin(),
+        //  mapObject.end(),
+        //  [val](const auto& mo) {return mo.second == val; });
+        for (const auto& admin: admins) {
+
+            bool is_inside = false;
+            for (const auto& ad: admin_list) {
+                if (ad->second == admin) {
+                    is_inside = true;
+                    break
+                }
+            }
+            if (!is_inside) {
+                admin_list.insert({idx, admin});
+                stop_point->admin_list.push_back(idx);
+                ++idx;
+            }
+        }
         if (admins.empty()) ++cpt_no_projected;
     }
     if (cpt_no_projected)

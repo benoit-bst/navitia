@@ -833,14 +833,16 @@ void builder::finish() {
 */
  void builder::manage_admin() {
      if (!data->geo_ref->admins.empty()) {
-         navitia::georef::Admin * admin = data->geo_ref->admins[0];
+        auto* admin = data->geo_ref->admins[0];
+        data->admin_list.insert({0, admin});
+
         for(navitia::type::StopArea* sa : data->pt_data->stop_areas){
             sa->admin_list.clear();
-            sa->admin_list.push_back(admin);
+            sa->admin_list.push_back(0);
         }
         for(navitia::type::StopPoint* sp : data->pt_data->stop_points){
             sp->admin_list.clear();
-            sp->admin_list.push_back(admin);
+            sp->admin_list.push_back(0);
         }
 
         for(navitia::georef::Way * way : data->geo_ref->ways) {
