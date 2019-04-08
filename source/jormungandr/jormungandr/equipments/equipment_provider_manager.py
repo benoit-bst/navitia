@@ -154,3 +154,7 @@ class EquipmentProviderManager(object):
             provider.get_informations(stop_points)
 
         return response
+
+    def _get_providers(self):
+        return dict(self._equipment_providers, **self._equipment_providers_legacy)
+

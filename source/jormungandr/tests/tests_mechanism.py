@@ -530,3 +530,28 @@ def mock_car_park_providers(pois_supported):
         new_callable=mock.PropertyMock,
         return_value=lambda: providers,
     )
+
+
+class MockEquipmentProvider():
+    def __init__(self, data, name='mock equipment provider'):
+        self.data = data
+        self.name = name
+
+    def get_informations(self, stop_point_list):
+        return self._process_data(self.data, stop_points_list)
+
+    def status(self):
+        return {}
+
+    def feed_publisher(self):
+        return FeedPublisher(id='mock_equipment', name=self.name, license='license to kill', url='bob.com')
+
+
+def mock_equipment_providers(data):
+    providers = [MockEquipmentProvider(data=data)]
+    return mock.patch(
+        'jormungandr.equipments.EquipmentProviderManager._get_providers',
+        new_callable=mock.PropertyMock,
+        return_value=lambda: providers,
+    )
+
