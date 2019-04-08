@@ -494,6 +494,19 @@ struct routing_api_data {
         b.data->pt_data->sort_and_index();
         b.data->build_raptor();
 
+        // Add SYTRAL codes on stop point
+        const auto* sp = b.get<nt::StopPoint>("stop_point:stopA");
+        b.data->pt_data->codes.add(sp, "TCL_ESCALIER", "1");
+        b.data->pt_data->codes.add(sp, "TCL_ESCALIER", "2");
+        b.data->pt_data->codes.add(sp, "TCL_ESCALIER", "3");
+        b.data->pt_data->codes.add(sp, "TCL_ESCALIER", "4");
+        b.data->pt_data->codes.add(sp, "TCL_ASCENCEUR", "1");
+        sp = b.get<nt::StopPoint>("stop_point:stopB");
+        b.data->pt_data->codes.add(sp, "TCL_ASCENCEUR", "1");
+        b.data->pt_data->codes.add(sp, "TCL_ASCENCEUR", "2");
+        b.data->pt_data->codes.add(sp, "TCL_ASCENCEUR", "3");
+        b.data->pt_data->codes.add(sp, "TCL_ASCENCEUR", "4");
+
         //add a main stop area to our admin
         admin->main_stop_areas.push_back(b.data->pt_data->stop_areas_map["stopC"]);
 
