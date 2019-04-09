@@ -55,6 +55,19 @@ class TestEquipment(AbstractTestFixture):
             equipment_reports = get_not_null(response, 'equipment_reports')
             for equipment_report in equipment_reports:
                 is_valid_equipment_report(equipment_report)
+            assert len(equipment_reports) == 3
+
+            assert line_reports[0]['line']['id'] == 'A'
+            assert len(line_reports[0]['stop_area_equipments']) == 1
+            assert line_reports[0]['stop_area_equipments'][0]['stop_area']['uri'] == 'stopA'
+            assert line_reports[0]['stop_area_equipments'][0]['equipment_details']['id'] == '1'
+            assert line_reports[0]['stop_area_equipments'][0]['equipment_details']['embedded_type'] == 'escalator'
+            assert line_reports[0]['line']['id'] == 'A'
+            assert len(line_reports[0]['stop_area_equipments']) == 1
+            assert line_reports[0]['stop_area_equipments'][0]['stop_area']['uri'] == 'stopA'
+            assert line_reports[0]['stop_area_equipments'][0]['equipment_details']['id'] == '1'
+            assert line_reports[0]['stop_area_equipments'][0]['equipment_details']['embedded_type'] == 'escalator'
+
 
         with mock_equipment_providers(data=standard_mock_elevator_data):
             response = self.query_region('equipment_reports?' + default_date_filter)
@@ -102,7 +115,7 @@ class TestEquipment(AbstractTestFixture):
     def test_equipment_reports_with_wrong_id(self):
 
         """
-        simple equipment_reports call
+        wrong id test
         """
         with mock_equipment_providers(data=wrong_mock_with_bad_id_data):
             response = self.query_region('equipment_reports?' + default_date_filter)
