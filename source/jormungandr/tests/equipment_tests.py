@@ -48,11 +48,28 @@ class TestEquipment(AbstractTestFixture):
         with mock_equipment_providers(data=standard_mock_escalator_data):
             response = self.query_region('equipment_reports?' + default_date_filter)
 
+            warnings = get_not_null(response, 'warnings')
+            assert len(warnings) == 1
+            assert warnings[0]['id'] == 'beta_endpoint'
+
+            equipment_reports = get_not_null(response, 'equipment_reports')
+            for equipment_report in equipment_reports:
+                is_valid_equipment_report(equipment_report)
+
         with mock_equipment_providers(data=standard_mock_elevator_data):
             response = self.query_region('equipment_reports?' + default_date_filter)
 
+            equipment_reports = get_not_null(response, 'equipment_reports')
+            for equipment_report in equipment_reports:
+                is_valid_equipment_report(equipment_report)
+
         with mock_equipment_providers(data=standard_mock_mixed_data):
             response = self.query_region('equipment_reports?' + default_date_filter)
+
+            equipment_reports = get_not_null(response, 'equipment_reports')
+            for equipment_report in equipment_reports:
+                is_valid_equipment_report(equipment_report)
+
 
     def test_equipment_reports_with_filter(self):
         """
@@ -61,11 +78,26 @@ class TestEquipment(AbstractTestFixture):
         with mock_equipment_providers(data=standard_mock_escalator_data):
             response = self.query_region('equipment_reports?' + default_date_filter + TCL_escalator_filter)
 
+            equipment_reports = get_not_null(response, 'equipment_reports')
+            for equipment_report in equipment_reports:
+                is_valid_equipment_report(equipment_report)
+
+
         with mock_equipment_providers(data=standard_mock_elevator_data):
             response = self.query_region('equipment_reports?' + default_date_filter + TCL_elevator_filter)
 
+            equipment_reports = get_not_null(response, 'equipment_reports')
+            for equipment_report in equipment_reports:
+                is_valid_equipment_report(equipment_report)
+
+
         with mock_equipment_providers(data=standard_mock_mixed_data):
             response = self.query_region('equipment_reports?' + default_date_filter + TCL_escalator_filter)
+
+            equipment_reports = get_not_null(response, 'equipment_reports')
+            for equipment_report in equipment_reports:
+                is_valid_equipment_report(equipment_report)
+
 
     def test_equipment_reports_with_wrong_id(self):
 
