@@ -151,14 +151,14 @@ class EquipmentProviderManager(object):
 
             stop_points = get_from_to_stop_points_of_journeys(response.journeys)
 
+        else:
+            self.logger.exception('impossible to use api {} with equipments provider'.format(api))
+
         # Update config before calling web-service
         self.update_config()
 
         for provider in dict(self._equipment_providers, **self._equipment_providers_legacy).values():
             provider.get_informations(stop_points)
-
-        else:
-            self.logger.exception('impossible to use api {} with equipments provider'.format(api))
 
         return response
 
