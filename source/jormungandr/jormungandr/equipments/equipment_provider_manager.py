@@ -133,8 +133,7 @@ class EquipmentProviderManager(object):
         :return: response: the pb response updated with equipment details
         """
         if api == type_pb2.API.Value('equipment_reports'):
-            for provider in dict(self._equipment_providers, **self._equipment_providers_legacy).values():
-                provider.get_informations_for_equipment_reports(response.equipment_reports)
+            stop_points = [sp for er in response.equipment_reports for sae in er.stop_area_equipments for sp in sae.stop_area.stop_points]
 
         elif api == type_pb2.API.Value('PLANNER'):
             def get_from_to_stop_points_of_journeys(journeys):
@@ -152,11 +151,11 @@ class EquipmentProviderManager(object):
 
             stop_points = get_from_to_stop_points_of_journeys(response.journeys)
 
-            # Update config before calling web-service
-            self.update_config()
+        # Update config before calling web-service
+        self.update_config()
 
-            for provider in dict(self._equipment_providers, **self._equipment_providers_legacy).values():
-                provider.get_informations_for_journeys(stop_points)
+        for provider in dict(self._equipment_providers, **self._equipment_providers_legacy).values():
+            provider.get_informations(stop_points)
 
         else:
             self.logger.exception('impossible to use api {} with equipments provider'.format(api))

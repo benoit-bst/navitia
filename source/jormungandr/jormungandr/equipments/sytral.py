@@ -57,23 +57,14 @@ class SytralProvider(object):
             ),
         )
 
-    def get_informations_for_journeys(self, stop_points_list):
+    def get_informations(self, stop_points_list):
         """
         Get equipment information from Sytral webservice and update response accordingly
         """
         data = self._call_webservice()
 
         if data:
-            return self._process_data_for_journeys(data, stop_points_list)
-
-    def get_informations_for_equipment_reports(self, equipment_reports_list):
-        """
-        Get equipment information from Sytral webservice and update response accordingly
-        """
-        data = self._call_webservice()
-
-        if data:
-            return self._process_data_for_equipment_reports(data, equipment_reports_list)
+            return self._process_data(data, stop_points_list)
 
     @cache.memoize(app.config.get(str('CACHE_CONFIGURATION'), {}).get(str('TIMEOUT_SYTRAL'), 30))
     def _call_webservice(self):
@@ -125,7 +116,7 @@ class SytralProvider(object):
         equipment_details.current_availability.effect.label = current_availaibity['effect']['label']
 
 
-    def _process_data_for_journey(self, data, stop_points_list):
+    def _process_data(self, data, stop_points_list):
         """
         For each stop point within journeys response, the structure 'equipment_details' is updated if the corresponding code is present
         :param data: equipments data received from the webservice
@@ -139,23 +130,6 @@ class SytralProvider(object):
                     if equipments_list:
                         equipment = equipments_list[0]
                         # Fill PB
-                        details = st.equipment_details.add()
-                        _fill_equipment_details(equipment_form_web_service=equipment, equipment_details=details)
-
-
-    def _process_data_for_equipment_reports(self, data, equipment_reports_list):
-        """
-        For each stop point within journeys response, the structure 'equipment_details' is updated if the corresponding code is present
-        :param data: equipments data received from the webservice
-        :param stop_points_list: list of stop_points from the protobuf response
-        """
-        for equipment_report in equipment_reports_list:
-            for stop_area_equipment in equipment_report.stop_area_equipments:
-                for equipment_detail in stop_area_equipment.equipment_details:
-                        equipments_list = jmespath.search("equipments_details[?id=='{}']".format(equipment_detail.id), data)
-
-                        if equipments_list:
-                            equipment = equipments_list[0]
-
-                            _fill_equipment_details(equipment_form_web_service=equipment, equipment_details=equipment_detail)
+                        equipment_details = st.equipment_details.add()
+                        _fill_equipment_details(equipment_form_web_service=equipment, equipment_details=equipment_details)
 

@@ -537,8 +537,8 @@ class MockEquipmentProvider():
         self.data = data
         self.name = name
 
-    def get_informations_for_equipment_reports(self, equipment_reports_list):
-        return self._process_data_for_equipment_reports(self.data, equipment_reports_list)
+    def get_informations(self, stop_point_list):
+        return self._process_data(self.data, stop_point_list)
 
     def status(self):
         return {}
