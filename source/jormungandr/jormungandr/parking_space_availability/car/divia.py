@@ -102,10 +102,19 @@ def divia_maker(search_patterns):
                     and divia_provider_parking['fields'].get('coordonnees') is not None
                 ):
                     if len(divia_provider_parking['fields']['coordonnees']) > 1:
-                        return (
-                            float(divia_provider_parking['fields']['coordonnees'][0]),
-                            float(divia_provider_parking['fields']['coordonnees'][1]),
-                        )
+                        try:
+                            return (
+                                float(divia_provider_parking['fields']['coordonnees'][0]),
+                                float(divia_provider_parking['fields']['coordonnees'][1]),
+                            )
+                        except ValueError:
+                            self.log.error(
+                                'RT divia parking coordinates are in a wrong format <lat: {} - lon {}>'.format(
+                                    divia_provider_parking['fields']['coordonnees'][0],
+                                    divia_provider_parking['fields']['coordonnees'][1],
+                                )
+                            )
+                            return None
                     else:
                         return None
 
@@ -117,16 +126,14 @@ def divia_maker(search_patterns):
                     )
                 )
                 # if coordinates does not exist, the matching is only on ID
+                self.log.debug('matching only on parking ID')
                 return True
 
             divia_parking_coords = _divia_parking_coords(divia_provider_parking)
             if divia_parking_coords is None:
-                self.log.error(
-                    'divia parking {} does not have valid coordinates for matching'.format(
-                        divia_provider_parking['fields']['numero_parking']
-                    )
-                )
+                self.log.error('RT divia parking does not have valid coordinates for matching')
                 # if coordinates does not exist, the matching is only on ID
+                self.log.debug('matching only on parking ID')
                 return True
             if crowfly_distance_between_coords(poi_coords, divia_parking_coords) <= tolerance:
                 return True
@@ -137,7 +144,7 @@ def divia_maker(search_patterns):
             park = jmespath.search(
                 'records[?to_number(fields.{})==`{}`]|[0]'.format(self.id_park, poi['properties']['ref']), data
             )
-            if park and self._match_poi_coords_with_divia_provider_parking_coords(
+            if self._match_poi_coords_with_divia_provider_parking_coords(
                 poi, park, self.divia_tolerance_for_poi_coords_matching
             ):
                 available = jmespath.search('fields.{}'.format(self.available), park)
