@@ -37,13 +37,17 @@ EARTH_RADIUS_IN_METERS = 6372797.560856
 
 
 def crowfly_distance_between(start_coord, end_coord):
-    lon_arc = (start_coord.lon - end_coord.lon) * N_DEG_TO_RAD
+    return crowfly_distance_between_coords((start_coord.lat, start_coord.lon), (end_coord.lat, end_coord.lon))
+
+
+def crowfly_distance_between_coords(first_coord, second_coord):
+    lon_arc = (first_coord[1] - second_coord[1]) * N_DEG_TO_RAD
     lon_h = math.sin(lon_arc * 0.5)
     lon_h *= lon_h
-    lat_arc = (start_coord.lat - end_coord.lat) * N_DEG_TO_RAD
+    lat_arc = (first_coord[0] - second_coord[0]) * N_DEG_TO_RAD
     lat_h = math.sin(lat_arc * 0.5)
     lat_h *= lat_h
-    tmp = math.cos(start_coord.lat * N_DEG_TO_RAD) * math.cos(end_coord.lat * N_DEG_TO_RAD)
+    tmp = math.cos(first_coord[0] * N_DEG_TO_RAD) * math.cos(second_coord[0] * N_DEG_TO_RAD)
     return EARTH_RADIUS_IN_METERS * 2.0 * math.asin(math.sqrt(lat_h + tmp * lon_h))
 
 

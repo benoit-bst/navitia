@@ -32,10 +32,14 @@ from __future__ import absolute_import, print_function, unicode_literals, divisi
 import jmespath
 from collections import namedtuple
 
+import logging
+from jormungandr import app
 from jormungandr.parking_space_availability.car.common_car_park_provider import CommonCarParkProvider
 from jormungandr.parking_space_availability.car.parking_places import ParkingPlaces
+from jormungandr.street_network.utils import crowfly_distance_between_coords
 
 DEFAULT_DIVIA_FEED_PUBLISHER = None
+DEFAULT_DIVIA_TOLARANCE_FOR_POI_COORDS_MATCHING = 500
 
 SearchPattern = namedtuple('SearchPattern', ['id_park', 'available', 'total'])
 
@@ -51,14 +55,91 @@ def divia_maker(search_patterns):
             self, url, operators, dataset, timeout=1, feed_publisher=DEFAULT_DIVIA_FEED_PUBLISHER, **kwargs
         ):
             self.provider_name = 'DIVIA'
+            self.log = logging.LoggerAdapter(
+                logging.getLogger(__name__), extra={'provider_name': self.provider_name}
+            )
+            self.divia_tolerance_for_poi_coords_matching = kwargs.get(
+                'divia_tolerance_for_poi_coords_matching',
+                app.config.get(
+                    str('DIVIA_TOLARANCE_FOR_POI_COORDS_MATCHING'),
+                    DEFAULT_DIVIA_TOLARANCE_FOR_POI_COORDS_MATCHING,
+                ),
+            )
 
             super(_DiviaProvider, self).__init__(url, operators, dataset, timeout, feed_publisher, **kwargs)
+
+        def _match_poi_coords_with_divia_provider_parking_coords(self, poi, divia_provider_parking, tolerance):
+            """
+            return true if the distance between poi coordinates and real time Divia praking coordinates are <= tolerance
+            """
+            if poi is None:
+                self.log.error('poi is empty, can not match with realtime data')
+                return False
+
+            if divia_provider_parking is None:
+                self.log.error('real time divia parking is empty. Can not match with theoric poi')
+                return False
+
+            def _poi_coords(poi):
+                """
+                return the (lat,lon) couple for a given POI
+                """
+                if (
+                    poi.get('coord') is not None
+                    and poi['coord'].get('lat') is not None
+                    and poi['coord'].get('lon') is not None
+                ):
+                    return (float(poi['coord']['lat']), float(poi['coord']['lon']))
+                else:
+                    return None
+
+            def _divia_parking_coords(divia_provider_parking):
+                """
+                return the (lat,lon) couple for a given real time divia provider parkings
+                """
+                if (
+                    divia_provider_parking.get('fields') is not None
+                    and divia_provider_parking['fields'].get('coordonnees') is not None
+                ):
+                    if len(divia_provider_parking['fields']['coordonnees']) > 1:
+                        return (
+                            float(divia_provider_parking['fields']['coordonnees'][0]),
+                            float(divia_provider_parking['fields']['coordonnees'][1]),
+                        )
+                    else:
+                        return None
+
+            poi_coords = _poi_coords(poi)
+            if poi_coords is None:
+                self.log.error(
+                    'poi with properties.ref={} does not have valid coordinates for matching'.format(
+                        poi['properties']['ref']
+                    )
+                )
+                # if coordinates does not exist, the matching is only on ID
+                return True
+
+            divia_parking_coords = _divia_parking_coords(divia_provider_parking)
+            if divia_parking_coords is None:
+                self.log.error(
+                    'divia parking {} does not have valid coordinates for matching'.format(
+                        divia_provider_parking['fields']['numero_parking']
+                    )
+                )
+                # if coordinates does not exist, the matching is only on ID
+                return True
+            if crowfly_distance_between_coords(poi_coords, divia_parking_coords) <= tolerance:
+                return True
+            else:
+                return False
 
         def process_data(self, data, poi):
             park = jmespath.search(
                 'records[?to_number(fields.{})==`{}`]|[0]'.format(self.id_park, poi['properties']['ref']), data
             )
-            if park:
+            if park and self._match_poi_coords_with_divia_provider_parking_coords(
+                poi, park, self.divia_tolerance_for_poi_coords_matching
+            ):
                 available = jmespath.search('fields.{}'.format(self.available), park)
                 nb_places = jmespath.search('fields.{}'.format(self.total), park)
                 if available is not None and nb_places is not None and nb_places >= available:

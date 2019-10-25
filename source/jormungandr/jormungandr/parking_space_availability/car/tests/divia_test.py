@@ -42,6 +42,23 @@ poi = {
     'poi_type': {'name': 'Parking', 'id': 'poi_type:public_parking'},
 }
 
+poi_tours_parking_with_coords = {
+    'properties': {'operator': 'divia', 'ref': '42'},
+    'poi_type': {'name': 'Parking', 'id': 'poi_type:public_parking'},
+    'coord': {'lat': '47.3858089', 'lon': '0.7257019'},
+}
+
+poi_hector_malot_paris_parking_with_coords = {
+    'properties': {'operator': 'divia', 'ref': '42'},
+    'poi_type': {'name': 'Parking', 'id': 'poi_type:public_parking'},
+    'coord': {'lat': '48.846808', 'lon': '2.377202'},
+}
+
+# 60 meters from the hector malot parking Poi
+realtime_divia_hector_malot_paris_parking_coords = {'lat': 48.847267, 'lon': 2.377647}
+
+DIVIA_TOLARANCE_FOR_POI_COORDS_MATCHING = 200
+
 
 def car_park_space_availability_support_poi_test():
     """
@@ -129,6 +146,42 @@ def car_park_maker(divia_class, search_pattern):
         empty_parking = ParkingPlaces(available=None, occupied=None, available_PRM=None, occupied_PRM=None)
         provider._call_webservice = MagicMock(return_value=json.loads(divia_response))
         assert provider.get_informations(poi) == empty_parking
+
+        # Test matching coords
+        divia_response = """
+        {
+            "records":[
+                {
+                    "fields": {
+                        "%s": "42",
+                        "%s": 4,
+                        "%s": 7,
+                        "coordonnees" : [%s, %s]
+                    }
+                }
+            ]
+        }
+        """ % (
+            search_pattern.id_park,
+            search_pattern.available,
+            search_pattern.total,
+            realtime_divia_hector_malot_paris_parking_coords.get('lat'),
+            realtime_divia_hector_malot_paris_parking_coords.get('lon'),
+        )
+
+        # inside the tolerance (by default tolerance=500m)
+        # difference between the 2 points = 60m
+        parking_places = ParkingPlaces(available=4, occupied=3)
+        provider._call_webservice = MagicMock(return_value=json.loads(divia_response))
+        info = provider.get_informations(poi_hector_malot_paris_parking_with_coords)
+        assert info == parking_places
+        assert not hasattr(info, "available_PRM")
+        assert not hasattr(info, "occupied_PRM")
+
+        # outside the tolerance (by default tolerance=500m)
+        # difference between the 2 points ~= 328Km
+        provider._call_webservice = MagicMock(return_value=json.loads(divia_response))
+        assert provider.get_informations(poi_tours_parking_with_coords) == None
 
     return _test
 
