@@ -1,0 +1,22 @@
+name: Nightly deploy on Dev and Artemis
+
+on:
+  schedule:
+    - cron:  '* 3 * * *'
+
+
+jobs:
+  trigger_jenkins_job:
+    runs-on: ubuntu-latest
+    steps:
+    - name: install httpie
+      run: apt update && apt install -y httpie
+    - name: run deploy on dev
+      run: http -v -f POST https://${{secrets.JENKINS_NG_TOKEN}}@jenkins-core.canaltp.fr/job/deploy-navitia/buildWithParameters PLATFORM="dev_debian8"
+    - name: run deploy on Artemis
+      run: http -v -f POST https://${{secrets.JENKINS_NG_TOKEN}}@jenkins-core.canaltp.fr/job/deploy-navitia/buildWithParameters PLATFORM="artemis_debian8"
+    - name: slack notification (the job has failed)
+      if: failure()
+      run: |
+          echo '{"text":":warning: Github Actions: nightly job to deploy on Dev and Artemis is not running - trigger failed"}' | http --json POST ${{secrets.SLACK_NAVITIA_CORE_TEAM_URL}}
+
